@@ -1,11 +1,11 @@
 CC= /usr/bin/gcc
-all:	udpclient udpserver
+all:	Sender Reciever
 
-udpclient: udpclient.c;
-	${CC} udpclient.c -o udpclient
+Sender: Sender.c;
+	${CC} Sender.c -o Sender.o
 
-udpserver: udpserver.c;
-	${CC} udpserver.c -o udpserver
+Reciever: Reciever.c;
+	${CC} Reciever.c -o Reciever.o
 
 clean:
-	rm udpclient udpserver
+	rm Sender.o Reciever.o
