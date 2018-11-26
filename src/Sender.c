@@ -23,6 +23,16 @@ Overal TODOs for Sender:
 [ ] Implement stop and wait sender side
 
 [ ] Implement reading from input.txt file
+
+Statistics:
+
+Number of data packets transmitted (initial transmission only) 
+Total number of data bytes transmitted (this should be the sum of the count fields of all transmitted packets when transmitted for the first time only) 
+Total number of retransmissions 
+Total number of data packets transmitted (initial transmissions plus retransmissions) 
+Number of ACKs received 
+Count of how many times timeout expired
+
 */
 
 
@@ -53,6 +63,14 @@ int main(int argc, char *argv[])
    unsigned int msg_len;               /* length of message */
    int bytes_sent, bytes_recd;         /* number of bytes sent or received */
 
+   int data_packets_trans = 0;
+   int data_bytes_trans = 0;
+   int total_retransmissions = 0;
+   int total_data_packets_trans = 0;
+   int total_acks_recieved = 0;
+   int num_timeouts = 0;
+
+   int sequence_num = 0;
 
    /* assign command line arguments to appropriate variables */
 
@@ -149,6 +167,23 @@ int main(int argc, char *argv[])
    msg_len = strlen(sentence) + 1;
 
    /* send message */
+
+   while(/*still a line*/1)
+   {
+      
+      // compose message
+
+      // send message
+
+      // get response from server
+
+
+      // analyse response and act on it
+
+
+   }
+
+   // send final message to close connection
 
    bytes_sent = sendto(sock_client, sentence, msg_len, 0,
                        (struct sockaddr *)&server_addr, sizeof(server_addr));
