@@ -21,6 +21,8 @@ Overal TODOs for Sender:
 [ ] Read command line arguments and load them into globals
 
 [ ] Implement stop and wait sender side
+
+[ ] Implement reading from input.txt file
 */
 
 

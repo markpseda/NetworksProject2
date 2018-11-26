@@ -24,7 +24,7 @@
 /*
 Overal TODOs for Reciever:
 
-[ ] Read command line arguments and load them into globals
+[x] Read command line arguments and load them into globals
 
 [ ] Write to output.txt file at start and close file at close of program
 
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
    packet_loss_rate = atof(argv[1]);
    ack_loss_rate = atof(argv[2]);
-   
+
    #ifdef DEBUG
    printf("Packet Loss Rate Set To: %f\n", packet_loss_rate);
    printf("Ack Loss Rate Set To: %f\n", ack_loss_rate);
