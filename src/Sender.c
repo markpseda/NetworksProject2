@@ -1,40 +1,82 @@
-/* udp_client.c */ 
+/* udp_client.c */
 /* Programmed by Adarsh Sethi */
 /* Sept. 13, 2018 */
 
-#include <stdio.h>          /* for standard I/O functions */
-#include <stdlib.h>         /* for exit */
-#include <string.h>         /* for memset, memcpy, and strlen */
-#include <netdb.h>          /* for struct hostent and gethostbyname */
-#include <sys/socket.h>     /* for socket, sendto, and recvfrom */
-#include <netinet/in.h>     /* for sockaddr_in */
-#include <unistd.h>         /* for close */
+#include <stdio.h>      /* for standard I/O functions */
+#include <stdlib.h>     /* for exit */
+#include <string.h>     /* for memset, memcpy, and strlen */
+#include <netdb.h>      /* for struct hostent and gethostbyname */
+#include <sys/socket.h> /* for socket, sendto, and recvfrom */
+#include <netinet/in.h> /* for sockaddr_in */
+#include <unistd.h>     /* for close */
 
 #define STRING_SIZE 1024
 
-int main(void) {
+// Used to easily toggle more verbose debugging if desired
+#define DEBUG
 
-   int sock_client;  /* Socket used by client */ 
+/*
+Overal TODOs for Sender:
 
-   struct sockaddr_in client_addr;  /* Internet address structure that
+[ ] Read command line arguments and load them into globals
+
+[ ] Implement stop and wait sender side
+*/
+
+
+// Method Stubs to be implemented
+
+
+// Globals
+int timeout; // 10^timeout microseconds
+
+int main(int argc, char *argv[])
+{
+
+   int sock_client; /* Socket used by client */
+
+   struct sockaddr_in client_addr; /* Internet address structure that
                                         stores client address */
-   unsigned short client_port;  /* Port number used by client (local port) */
+   unsigned short client_port;     /* Port number used by client (local port) */
 
-   struct sockaddr_in server_addr;  /* Internet address structure that
+   struct sockaddr_in server_addr;    /* Internet address structure that
                                         stores server address */
-   struct hostent * server_hp;      /* Structure to store server's IP
+   struct hostent *server_hp;         /* Structure to store server's IP
                                         address */
    char server_hostname[STRING_SIZE]; /* Server's hostname */
-   unsigned short server_port;  /* Port number used by server (remote port) */
+   unsigned short server_port;        /* Port number used by server (remote port) */
 
-   char sentence[STRING_SIZE];  /* send message */
+   char sentence[STRING_SIZE];         /* send message */
    char modifiedSentence[STRING_SIZE]; /* receive message */
-   unsigned int msg_len;  /* length of message */
-   int bytes_sent, bytes_recd; /* number of bytes sent or received */
-  
+   unsigned int msg_len;               /* length of message */
+   int bytes_sent, bytes_recd;         /* number of bytes sent or received */
+
+
+   /* assign command line arguments to appropriate variables */
+
+   #ifdef DEBUG
+   printf("%d command line variables entered\n", argc);
+   #endif
+
+   // Make sure proper number of arguments (2 plus program name)
+   if(argc != 2)
+   {
+      printf("Invalid number of command line arguments, please try again\n");
+      return 1;
+   }
+
+   timeout = atof(argv[1]);
+   
+   #ifdef DEBUG
+   printf("Timeout Set To: %d\n", timeout);
+   #endif
+
+
+
    /* open a socket */
 
-   if ((sock_client = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+   if ((sock_client = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+   {
       perror("Client: can't open datagram socket\n");
       exit(1);
    }
@@ -49,7 +91,7 @@ int main(void) {
 
    /* initialize client address information */
 
-   client_port = 0;   /* This allows choice of any available local port */
+   client_port = 0; /* This allows choice of any available local port */
 
    /* Uncomment the lines below if you want to specify a particular 
              local port: */
@@ -68,8 +110,9 @@ int main(void) {
 
    /* bind the socket to the local client port */
 
-   if (bind(sock_client, (struct sockaddr *) &client_addr,
-                                    sizeof (client_addr)) < 0) {
+   if (bind(sock_client, (struct sockaddr *)&client_addr,
+            sizeof(client_addr)) < 0)
+   {
       perror("Client: can't bind to local address\n");
       close(sock_client);
       exit(1);
@@ -81,7 +124,8 @@ int main(void) {
 
    printf("Enter hostname of server: ");
    scanf("%s", server_hostname);
-   if ((server_hp = gethostbyname(server_hostname)) == NULL) {
+   if ((server_hp = gethostbyname(server_hostname)) == NULL)
+   {
       perror("Client: invalid server hostname\n");
       close(sock_client);
       exit(1);
@@ -93,7 +137,7 @@ int main(void) {
    memset(&server_addr, 0, sizeof(server_addr));
    server_addr.sin_family = AF_INET;
    memcpy((char *)&server_addr.sin_addr, server_hp->h_addr,
-                                    server_hp->h_length);
+          server_hp->h_length);
    server_addr.sin_port = htons(server_port);
 
    /* user interface */
@@ -103,19 +147,19 @@ int main(void) {
    msg_len = strlen(sentence) + 1;
 
    /* send message */
-  
+
    bytes_sent = sendto(sock_client, sentence, msg_len, 0,
-            (struct sockaddr *) &server_addr, sizeof (server_addr));
+                       (struct sockaddr *)&server_addr, sizeof(server_addr));
 
    /* get response from server */
-  
+
    printf("Waiting for response from server...\n");
    bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
-                (struct sockaddr *) 0, (int *) 0);
+                         (struct sockaddr *)0, (int *)0);
    printf("\nThe response from server is:\n");
    printf("%s\n\n", modifiedSentence);
 
    /* close the socket */
 
-   close (sock_client);
+   close(sock_client);
 }
