@@ -42,6 +42,15 @@ Count of how many times timeout expired
 // Globals
 int timeout; // 10^timeout microseconds
 
+
+struct message
+{
+	int count; // 0 = check balance, 1 = deposit, 2 = withdraw, 3 = transfer, 4 = exit
+	int sequence_number;		 // for deposits, withdraws, and transfers
+	char *data;	 // to switch btwn checkings and savings
+};
+
+
 int main(int argc, char *argv[])
 {
 
@@ -168,19 +177,84 @@ int main(int argc, char *argv[])
 
    /* send message */
 
+   /************ TRANSITION TO WAIT FOR ACK *******************/
+
    while(/*still a line*/1)
    {
+
+      int first_transmission = 1;
       
-      // compose message
 
-      // send message
-
-      // get response from server
-
-
-      // analyse response and act on it
+      // make_pkt
+      struct message new_message;
+      new_message.count = 1; //TODO
+		new_message.sequence_number = sequence_num;
+      new_message.data = "a"; //TODO
 
 
+      msg_len = sizeof(new_message);
+
+
+      // send NEW message
+
+      // keep looping until message is sent succesfully
+      while(1) 
+      {
+         int success = 0;
+
+         bytes_sent = sendto(sock_client, &new_message, msg_len, 0,
+                        (struct sockaddr *)&server_addr, sizeof(server_addr));
+         // Increment number of transmissions and bytes sent
+         if(first_transmission)
+         {
+            data_packets_trans += 1;
+            data_bytes_trans += bytes_sent;
+         }
+         total_data_packets_trans += 1;
+         total_data_packets_trans += bytes_sent;
+
+         int ACK_number_recieved;
+         int response_len = sizeof(ACK_number_recieved);
+         
+         // start timer
+
+         /********** WAIT FOR ACK *****************/
+
+         // timeout
+         struct timeval timeout;
+         timeout.tv_sec = 1; //TODO: hardcoded for now
+         timeout.tv_usec = 0;
+         setsockopt(sock_client, SOL_SOCKET, SO_RCVTIMEO, 
+                     (const void *) &timeout, sizeof(timeout));
+         bytes_recd = recvfrom(sock_client, ACK_number_recieved, response_len, 0,
+                           (struct sockaddr *)0, (int *)0);
+
+         if (bytes_recd <=0)
+         {
+            // timeout, resend
+            total_retransmissions += 1;
+         }
+         else
+         {
+            total_acks_recieved += 1;
+            // is ACK what was expected?
+            if(ACK_number_recieved == sequence_num)
+            {
+               // success! change sequence number
+               if(sequence_num == 0)
+               {
+                  sequence_num = 1;
+               }
+               else
+               {
+                  sequence_num = 0;
+               }
+               break; //exit this loop, send the next line of file
+            }
+            // going to retransmit
+         }
+
+      }
    }
 
    // send final message to close connection
