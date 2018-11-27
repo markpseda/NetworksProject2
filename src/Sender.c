@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
    char modifiedSentence[STRING_SIZE]; /* receive message */
    unsigned int msg_len;               /* length of message */
    int bytes_sent, bytes_recd;         /* number of bytes sent or received */
-   FILE *readFile                      /* The input file to be read and transmitted*/ 
+   FILE *readFile;                      /* The input file to be read and transmitted*/ 
 
    int data_packets_trans = 0;
    int data_bytes_trans = 0;
@@ -170,6 +170,13 @@ int main(int argc, char *argv[])
           server_hp->h_length);
    server_addr.sin_port = htons(server_port);
 
+   // Timeout configuration
+   struct timeval timeout;
+   timeout.tv_sec = 1;
+   timeout.tv_usec = 0;
+   setsockopt(sock_client, SOL_SOCKET, SO_RCVTIMEO, 
+               (const void *) &timeout, sizeof(timeout));
+
    /* user interface */
 
    //Opens INPUT file to be read, breaks program if incorrect.
@@ -182,35 +189,28 @@ int main(int argc, char *argv[])
 	printf("The contents of the file are empty.");
 	exit(1);
    }
-   //Loop that reads file line by line and copies it into sentence.
-   //Sentence is copied to message without NULL terminator.
-   while(1){
-	fgets(sentence,80,readFile);
-	if(feof(readFile)) break;
-	msg_len = strlen(sentence);
-	char info[strlen(sentence)];
-	memcpy(info, sentence, strlen(sentence));
-	char *message = info;
-   }
-   fclose(readFile); //Close file
-
-   //NEED TO SEND MESSAGES IN THE WHILE LOOP!
-
-   /* send message */
 
    /************ TRANSITION TO WAIT FOR ACK *******************/
 
-   while(/*still a line*/1)
+   //Loop that reads file line by line and copies it into sentence.
+   //Sentence is copied to message without NULL terminator.
+   while(1)
    {
+      fgets(sentence,80,readFile);
+	   if(feof(readFile)) break;
+      int data_len = strlen(sentence);
+	   char info[strlen(sentence)];
+	   memcpy(info, sentence, strlen(sentence));
+	   char *message = info;
 
       int first_transmission = 1;
       
 
       // make_pkt
       struct message new_message;
-      new_message.count = 1; //TODO
+      new_message.count = data_len;
 		new_message.sequence_number = sequence_num;
-      new_message.data = "a"; //TODO
+      new_message.data = message;
 
 
       msg_len = sizeof(new_message);
@@ -233,20 +233,15 @@ int main(int argc, char *argv[])
          }
          total_data_packets_trans += 1;
          total_data_packets_trans += bytes_sent;
-
-         int ACK_number_recieved;
-         int response_len = sizeof(ACK_number_recieved);
          
          // start timer
 
          /********** WAIT FOR ACK *****************/
 
-         // timeout
-         struct timeval timeout;
-         timeout.tv_sec = 1; //TODO: hardcoded for now
-         timeout.tv_usec = 0;
-         setsockopt(sock_client, SOL_SOCKET, SO_RCVTIMEO, 
-                     (const void *) &timeout, sizeof(timeout));
+         // Buffer for recieving the ack
+         int ACK_number_recieved;
+         int response_len = sizeof(ACK_number_recieved);
+
          bytes_recd = recvfrom(sock_client, ACK_number_recieved, response_len, 0,
                            (struct sockaddr *)0, (int *)0);
 
@@ -254,6 +249,8 @@ int main(int argc, char *argv[])
          {
             // timeout, resend
             total_retransmissions += 1;
+            // now it is no longer the first transmission
+            first_transmission = 0;
          }
          else
          {
@@ -274,9 +271,9 @@ int main(int argc, char *argv[])
             }
             // going to retransmit
          }
-
       }
    }
+   fclose(readFile); //Close file
 
    // send final message to close connection
 
