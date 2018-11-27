@@ -45,9 +45,9 @@ int timeout; // 10^timeout microseconds
 
 struct message
 {
-	int count; // 0 = check balance, 1 = deposit, 2 = withdraw, 3 = transfer, 4 = exit
-	int sequence_number;		 // for deposits, withdraws, and transfers
-	char *data;	 // to switch btwn checkings and savings
+	int count; // number of characters in data, no null character
+	int sequence_number;		 // self explainatory
+	char *data;	 // the data itself
 };
 
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
    // Make sure proper number of arguments (2 plus program name)
    if(argc != 2)
    {
-      printf("Invalid number of command line arguments, please try again\n");
+      printf("Invalid number of command line arguments, 2 expected, please try again\n");
       return 1;
    }
 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
    /* user interface */
 
    //Opens INPUT file to be read, breaks program if incorrect.
-   if((readFile = fopen("PUT FILE NAME HERE", "r")) == NULL){
+   if((readFile = fopen("input.txt", "r")) == NULL){
 	printf("Error opening file!");
 	exit(1);
    }
@@ -194,13 +194,15 @@ int main(int argc, char *argv[])
 
    //Loop that reads file line by line and copies it into sentence.
    //Sentence is copied to message without NULL terminator.
-   while(1)
+   while(fgets(sentence,80,readFile))
    {
-      fgets(sentence,80,readFile);
-	   if(feof(readFile)) break;
+      #ifdef DEBUG
+      printf("SENTENCE: %s\n", sentence);
+      #endif
+      
       int data_len = strlen(sentence);
-	   char info[strlen(sentence)];
-	   memcpy(info, sentence, strlen(sentence));
+	   char info[data_len];
+	   memcpy(info, sentence, data_len);
 	   char *message = info;
 
       int first_transmission = 1;
@@ -212,6 +214,14 @@ int main(int argc, char *argv[])
 		new_message.sequence_number = sequence_num;
       new_message.data = message;
 
+      #ifdef DEBUG
+      printf("*** MESSAGE DETAILS ***");
+      printf("New message data_len: %d\n", data_len);
+      printf("New message sequence number: %d\n", sequence_num);
+      message[data_len] = '\0';
+      printf("Message data: %s\n", message);
+      printf("***********************\n");
+      #endif
 
       msg_len = sizeof(new_message);
 
@@ -221,18 +231,28 @@ int main(int argc, char *argv[])
       // keep looping until message is sent succesfully
       while(1) 
       {
-         int success = 0;
-
          bytes_sent = sendto(sock_client, &new_message, msg_len, 0,
                         (struct sockaddr *)&server_addr, sizeof(server_addr));
          // Increment number of transmissions and bytes sent
+
+         
          if(first_transmission)
          {
+            printf("Packet %d transmitted with %d data bytes\n",sequence_num, msg_len);
             data_packets_trans += 1;
-            data_bytes_trans += bytes_sent;
+            data_bytes_trans += new_message.count;
+
+            total_data_packets_trans += 1;
          }
-         total_data_packets_trans += 1;
-         total_data_packets_trans += bytes_sent;
+         else
+         {
+            printf("Packet %d retransmitted with %d data bytes\n",sequence_num, msg_len);
+
+            total_data_packets_trans += 1;
+
+            total_retransmissions += 1;
+         }
+
          
          // start timer
 
@@ -242,19 +262,26 @@ int main(int argc, char *argv[])
          int ACK_number_recieved;
          int response_len = sizeof(ACK_number_recieved);
 
+         /*
          bytes_recd = recvfrom(sock_client, ACK_number_recieved, response_len, 0,
                            (struct sockaddr *)0, (int *)0);
+         */
+         //TESTING ONLY
+         bytes_recd = 2;
+         ACK_number_recieved = sequence_num;
 
          if (bytes_recd <=0)
          {
+            printf("Timeout expired for packet numberd %d\n", sequence_num);
             // timeout, resend
-            total_retransmissions += 1;
+            num_timeouts += 1;
             // now it is no longer the first transmission
             first_transmission = 0;
          }
          else
          {
             total_acks_recieved += 1;
+            printf("ACK %d recieved\n", ACK_number_recieved);
             // is ACK what was expected?
             if(ACK_number_recieved == sequence_num)
             {
@@ -272,23 +299,21 @@ int main(int argc, char *argv[])
             // going to retransmit
          }
       }
+      //if(feof(readFile)) break;
    }
    fclose(readFile); //Close file
 
-   // send final message to close connection
-
-   bytes_sent = sendto(sock_client, sentence, msg_len, 0,
-                       (struct sockaddr *)&server_addr, sizeof(server_addr));
-
-   /* get response from server */
-
-   printf("Waiting for response from server...\n");
-   bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
-                         (struct sockaddr *)0, (int *)0);
-   printf("\nThe response from server is:\n");
-   printf("%s\n\n", modifiedSentence);
-
+   printf("End of Transmission Packet TODO transmissed\n");
    /* close the socket */
 
    close(sock_client);
+
+   printf("\n\n***** FINAL STATISTICS *****\n");
+   printf("Number of data packets transmitted:              %d\n", data_packets_trans);
+   printf("Total number of data bytes transmitted:          %d\n", data_bytes_trans);
+   printf("Total number of retransmissions:                 %d\n", total_retransmissions);
+   printf("Total number of data packets transmitted:        %d\n", total_data_packets_trans);
+   printf("Number of ACKs recieved:                         %d\n", total_acks_recieved);
+   printf("Count of how many times timeout expired:         %d\n", num_timeouts);
+
 }
