@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
    char modifiedSentence[STRING_SIZE]; /* receive message */
    unsigned int msg_len;               /* length of message */
    int bytes_sent, bytes_recd;         /* number of bytes sent or received */
+   FILE *readFile                      /* The input file to be read and transmitted*/ 
 
 
    /* assign command line arguments to appropriate variables */
@@ -144,9 +145,29 @@ int main(int argc, char *argv[])
 
    /* user interface */
 
-   printf("Please input a sentence:\n");
-   scanf("%s", sentence);
-   msg_len = strlen(sentence) + 1;
+   //Opens INPUT file to be read, breaks program if incorrect.
+   if((readFile = fopen("PUT FILE NAME HERE", "r")) == NULL){
+	printf("Error opening file!");
+	exit(1);
+   }
+   //Checks to see if the file is empty, breaks if so.
+   if(feof(readFile)){
+	printf("The contents of the file are empty.");
+	exit(1);
+   }
+   //Loop that reads file line by line and copies it into sentence.
+   //Sentence is copied to message without NULL terminator.
+   while(1){
+	fgets(sentence,80,readFile);
+	if(feof(readFile)) break;
+	msg_len = strlen(sentence);
+	char info[strlen(sentence)];
+	memcpy(info, sentence, strlen(sentence));
+	char *message = info;
+   }
+   fclose(readFile); //Close file
+
+   //NEED TO SEND MESSAGES IN THE WHILE LOOP!
 
    /* send message */
 
