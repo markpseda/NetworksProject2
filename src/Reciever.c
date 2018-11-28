@@ -171,7 +171,7 @@ int main(int argc, char **argv)
       
 
       //If loss is detected, drop the packet, no ack sent back
-      if(SimulateLoss() == 1){
+      if(SimulateLoss() == 0){
          printf("Packed %d lost.\n", new_message.sequence_number);
          data_packets_recieved_but_dropped_loss +=1;
          continue;
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
       short int ACK = htonl(ACK_val);
 
       toal_acks_generated_w_w_loss += 1;
-      if(SimulateACKLoss() == 1)
+      if(SimulateACKLoss() == 0)
       {
          // simulate ack loss
          printf("ACK %d lost.\n", ACK_val);
@@ -274,7 +274,6 @@ int main(int argc, char **argv)
 }
 
 int SimulateLoss(){
-   return 0;
    float randomNum = ((float)rand())/RAND_MAX;
    if(randomNum < packet_loss_rate){
       return 0;
@@ -283,7 +282,6 @@ int SimulateLoss(){
 }
 
 int SimulateACKLoss(){
-   return 0;
    float randomNum = ((float)rand())/RAND_MAX;
    if(randomNum < ack_loss_rate){
       return 0;
