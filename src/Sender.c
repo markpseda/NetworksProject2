@@ -307,7 +307,14 @@ int main(int argc, char *argv[])
    }
    fclose(readFile); //Close file
 
-   printf("End of Transmission Packet TODO transmissed\n");
+   printf("End of Transmission Packet TODO explain transmissed\n");
+
+   struct message last_message;
+   last_message.count = 0;
+   last_message.sequence_number = 0;
+
+   sendto(sock_client, &last_message, sizeof(last_message), 0,
+                        (struct sockaddr *)&server_addr, sizeof(server_addr));
    /* close the socket */
 
    close(sock_client);

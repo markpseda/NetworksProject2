@@ -16,6 +16,8 @@
 // Used to easily toggle more verbose debugging if desired
 #define DEBUG
 
+#undef DEBUG
+
 /* SERV_UDP_PORT is the port number on which the server listens for
    incoming messages from clients. You should change this to a different
    number to prevent conflicts with others in the class. */
@@ -68,7 +70,7 @@ int main(int argc, char **argv)
    unsigned int msg_len;               /* length of message */
    int bytes_sent, bytes_recd;         /* number of bytes sent or received */
    unsigned int i;                     /* temporary loop variable */
-   int sequence_number = 0;            /* sequence number */
+   int next_sequence_number = 0;            /* sequence number */
    int data_length;                    /* length of data lines */
    FILE *writeFile;                   /* file data will be written to */
 
@@ -78,7 +80,7 @@ int main(int argc, char **argv)
    int duplicat_packets_recieved_without_loss = 0;
    int data_packets_recieved_but_dropped_loss = 0;
    int total_data_packets_recieved_succ_loss_dup = 0;
-   int acks_trans_without_loss = 0
+   int acks_trans_without_loss = 0;
    int acks_generated_but_dropped = 0;
    int toal_acks_generated_w_w_loss = 0;
 
@@ -144,70 +146,135 @@ int main(int argc, char **argv)
    writeFile = fopen("output.txt", "w");    //Opening output file
 
    for (;;)
-   {
+   {  
+      int b_is_new_packet = 0;
 
       struct message new_message;
 
       bytes_recd = recvfrom(sock_server, &new_message, sizeof(new_message), 0,
                             (struct sockaddr *)&client_addr, &client_addr_len);
       
-      //ASSUMING THE ABOVE WORKS, message is arbitrary, replace later!
+      
       data_length = new_message.count;  //Receive length of data
+      
+      if(data_length == 0){       //If EoT trans. detected, close file and terminate.
+         printf("End of Transmission Packet with sequence number %d recieved with %d data bytes.\n", new_message.sequence_number, new_message.count);
+         break;
+      }
+      
+      total_data_packets_recieved_succ_loss_dup += 1;
+      //ASSUMING THE ABOVE WORKS, message is arbitrary, replace later!
+
 
       // check if new message
 
       
-      if(data_length == 0){       //If EoT trans. detected, close file and terminate.
-         fclose(writeFile);
-         break;
-      }
 
-      //If loss is detected, drop the packet.
-      if(SimulateLoss() == 0){
-         printf("Packed %d lost.\n", sequence_number);
+      //If loss is detected, drop the packet, no ack sent back
+      if(SimulateLoss() == 1){
+         printf("Packed %d lost.\n", new_message.sequence_number);
+         data_packets_recieved_but_dropped_loss +=1;
          continue;
       }
 
-      if(new_message.sequence_number == sequence_number)
+      if(new_message.sequence_number == next_sequence_number)
+      {
+         b_is_new_packet = 1;
+      }
+      else
+      {
+         b_is_new_packet = 0;
+      }
+       
+
+      // Check if new message
+      if(b_is_new_packet)
       {
          // new message
-         printf("Packet %d")
+         printf("Packet %d recieved with %d data bytes.\n", new_message.sequence_number, new_message.count);
+         data_packets_recieved_succesfully += 1;
+
+         data_bytes_delivered += new_message.count;
+
+         //Swap sequence number for new message recieved succesfully
+         if(next_sequence_number == 0)
+         {
+            next_sequence_number = 1;
+         }
+         else
+         {
+            next_sequence_number = 0;
+         }
+      }
+      else
+      {
+         // duplicate message
+         printf("Duplicate packet %d recieved with %d data bytes.\n", new_message.sequence_number, new_message.count);
+         duplicat_packets_recieved_without_loss += 1;
+
+         // we are done in this case, no need to copy the data since it is a duplicate
+         //continue;
       }
 
-      //Swap sequence number
-      if(sequence_number == 0){
-         sequence_number = 1;
+      
+
+
+     
+
+      /********************* WRITE TO FILE *****************************/
+      if(b_is_new_packet)
+      {
+         memcpy(sentence, new_message.data, data_length);      //Receive actual text line
+         sentence[data_length] = '\0';     //Add null terminator
+         #ifdef DEBUG
+         printf("String to add to file: %s\n", sentence);
+         #endif
+         fputs(sentence,writeFile);     //Write message to file
       }
-      else{
-         sequence_number = 0;
-      }
-      memcpy(sentence, new_message.data, data_length);      //Receive actual text line
-      sentence[data_length] = '\0';     //Add null terminator
-      fputs(sentence,writeFile);     //Write message to file
+      /*********************************************************/
 
 
-      if(SimulateACKLoss() == 0){ //Simulate ack loss
-         continue;
-      }
-      else{
-         //message ACK = new message;  //CONSTRUCTING ACKS
-         //ACK.count = 0;
-         //ACK.sequence_number = sequence_number;
-         //ACK.data = NULL;
-      }
-
-
-      /* send message */
-
-      short int ACK_val = new_message.sequence_number;
+      /************** SEND ACK ************************/
+      short int ACK_val = new_message.sequence_number; // duplicate or new this is true
       short int ACK = htonl(ACK_val);
 
-      bytes_sent = sendto(sock_server, &ACK, 2, 0,
-                          (struct sockaddr *)&client_addr, client_addr_len);
+      toal_acks_generated_w_w_loss += 1;
+      if(SimulateACKLoss() == 1)
+      {
+         // simulate ack loss
+         printf("ACK %d lost.\n", ACK_val);
+         acks_generated_but_dropped += 1;
+
+      }
+      else
+      {
+         bytes_sent = sendto(sock_server, &ACK_val, 2, 0,
+                     (struct sockaddr *)&client_addr, client_addr_len);
+         printf("ACK %d transmitted.\n", ACK_val);
+         acks_trans_without_loss += 1;
+      }
+      /************************************************/
+
    }
+
+   // all done, time to tidy up
+   fclose(writeFile);
+
+   printf("\n\n***** FINAL STATISTICS *****\n");
+   printf("Number of data packets received successfully:                         %d\n", data_packets_recieved_succesfully);
+   printf("Total number of data bytes received which are delivered to user:      %d\n", data_bytes_delivered);
+   printf("Total number of duplicate data packets received (without loss) :      %d\n", duplicat_packets_recieved_without_loss);
+   printf("Number of data packets received but dropped due to loss:              %d\n", data_packets_recieved_but_dropped_loss);
+   printf("Total number of data packets received:                                %d\n", total_data_packets_recieved_succ_loss_dup);
+   printf("Number of ACKs transmitted without loss:                              %d\n", acks_trans_without_loss);
+   printf("Number of ACKs generated but dropped due to loss:                     %d\n", acks_generated_but_dropped);
+   printf("Total number of ACKs generated (with and without loss):               %d\n", toal_acks_generated_w_w_loss);
+
+
 }
 
 int SimulateLoss(){
+   return 0;
    float randomNum = ((float)rand())/RAND_MAX;
    if(randomNum < packet_loss_rate){
       return 0;
@@ -216,6 +283,7 @@ int SimulateLoss(){
 }
 
 int SimulateACKLoss(){
+   return 0;
    float randomNum = ((float)rand())/RAND_MAX;
    if(randomNum < ack_loss_rate){
       return 0;
