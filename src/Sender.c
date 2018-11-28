@@ -47,7 +47,7 @@ struct message
 {
 	int count; // number of characters in data, no null character
 	int sequence_number;		 // self explainatory
-	char *data;	 // the data itself
+	char data[80];	 // the data itself
 };
 
 
@@ -203,7 +203,8 @@ int main(int argc, char *argv[])
       int data_len = strlen(sentence);
 	   char info[data_len];
 	   memcpy(info, sentence, data_len);
-	   char *message = info;
+	   
+
 
       int first_transmission = 1;
       
@@ -212,14 +213,17 @@ int main(int argc, char *argv[])
       struct message new_message;
       new_message.count = data_len;
 		new_message.sequence_number = sequence_num;
-      new_message.data = message;
+
+      
+
+      memcpy(new_message.data, info, data_len);
 
       #ifdef DEBUG
       printf("*** MESSAGE DETAILS ***");
       printf("New message data_len: %d\n", data_len);
       printf("New message sequence number: %d\n", sequence_num);
-      message[data_len] = '\0';
-      printf("Message data: %s\n", message);
+      //message[data_len] = '\0';
+      //printf("Message data: %s\n", message);
       printf("***********************\n");
       #endif
 
@@ -262,13 +266,13 @@ int main(int argc, char *argv[])
          int ACK_number_recieved;
          int response_len = sizeof(ACK_number_recieved);
 
-         /*
-         bytes_recd = recvfrom(sock_client, ACK_number_recieved, response_len, 0,
+         
+         bytes_recd = recvfrom(sock_client, &ACK_number_recieved, response_len, 0,
                            (struct sockaddr *)0, (int *)0);
-         */
+         
          //TESTING ONLY
-         bytes_recd = 2;
-         ACK_number_recieved = sequence_num;
+         //bytes_recd = 2;
+         //ACK_number_recieved = sequence_num;
 
          if (bytes_recd <=0)
          {

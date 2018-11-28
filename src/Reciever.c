@@ -9,6 +9,7 @@
 #include <sys/socket.h> /* for socket, sendto, and recvfrom */
 #include <netinet/in.h> /* for sockaddr_in */
 #include <unistd.h>     /* for close */
+#include <time.h>       /* for random num */
 
 #define STRING_SIZE 1024
 
@@ -43,6 +44,12 @@ double ack_loss_rate;
 int SimulateLoss();
 int SimulateACKLoss();
 
+struct message{
+   int count;
+   int sequence_number;
+   char data[80];
+};
+
 int main(int argc, char **argv)
 {
 
@@ -61,6 +68,11 @@ int main(int argc, char **argv)
    unsigned int msg_len;               /* length of message */
    int bytes_sent, bytes_recd;         /* number of bytes sent or received */
    unsigned int i;                     /* temporary loop variable */
+   int sequence_number = 0;            /* sequence number */
+   int data_length;                    /* length of data lines */
+   FILE *writeFile;                   /* file data will be written to */
+
+   srand((unsigned int) time(NULL));
 
    /* assign command line arguments to appropriate variables */
 
@@ -119,23 +131,74 @@ int main(int argc, char **argv)
 
    client_addr_len = sizeof(client_addr);
 
+   writeFile = fopen("output.txt", "w");    //Opening output file
+
    for (;;)
    {
 
-      bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
+      struct message new_message;
+
+      bytes_recd = recvfrom(sock_server, &new_message, sizeof(new_message), 0,
                             (struct sockaddr *)&client_addr, &client_addr_len);
-      printf("Received Sentence is: %s\n     with length %d\n\n",
-             sentence, bytes_recd);
+      
+      //ASSUMING THE ABOVE WORKS, message is arbitrary, replace later!
+      data_length = new_message.count;  //Receive length of data
 
-      /* prepare the message to send */
+      if(data_length == 0){       //If EoT trans. detected, close file and terminate.
+         fclose(writeFile);
+         break;
+      }
 
-      msg_len = bytes_recd;
-      for (i = 0; i < msg_len; i++)
-         modifiedSentence[i] = toupper(sentence[i]);
+      //If loss is detected, drop the packet.
+      if(SimulateLoss() == 0){
+         continue;
+      }
+
+      //Swap sequence number
+      if(sequence_number == 0){
+         sequence_number = 1;
+      }
+      else{
+         sequence_number = 0;
+      }
+      memcpy(sentence, new_message.data, data_length);      //Receive actual text line
+      sentence[data_length] = '\0';     //Add null terminator
+      fputs(sentence,writeFile);     //Write message to file
+
+
+      if(SimulateACKLoss() == 0){ //Simulate ack loss
+         continue;
+      }
+      else{
+         //message ACK = new message;  //CONSTRUCTING ACKS
+         //ACK.count = 0;
+         //ACK.sequence_number = sequence_number;
+         //ACK.data = NULL;
+      }
+
 
       /* send message */
 
-      bytes_sent = sendto(sock_server, modifiedSentence, msg_len, 0,
+      short int ACK_val = new_message.sequence_number;
+      short int ACK = htonl(ACK_val);
+
+      bytes_sent = sendto(sock_server, &ACK, 2, 0,
                           (struct sockaddr *)&client_addr, client_addr_len);
    }
+}
+
+int SimulateLoss(){
+   float randomNum = ((float)rand())/RAND_MAX;
+   if(randomNum < packet_loss_rate){
+      return 0;
+   }
+   return 1;
+}
+
+int SimulateACKLoss(){
+   float randomNum = ((float)rand())/RAND_MAX;
+   if(randomNum < ack_loss_rate){
+      return 0;
+   }
+   return 1;
 }
