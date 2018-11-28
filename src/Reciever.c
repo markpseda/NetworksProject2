@@ -72,6 +72,16 @@ int main(int argc, char **argv)
    int data_length;                    /* length of data lines */
    FILE *writeFile;                   /* file data will be written to */
 
+
+   int data_packets_recieved_succesfully = 0;
+   int data_bytes_delivered = 0;
+   int duplicat_packets_recieved_without_loss = 0;
+   int data_packets_recieved_but_dropped_loss = 0;
+   int total_data_packets_recieved_succ_loss_dup = 0;
+   int acks_trans_without_loss = 0
+   int acks_generated_but_dropped = 0;
+   int toal_acks_generated_w_w_loss = 0;
+
    srand((unsigned int) time(NULL));
 
    /* assign command line arguments to appropriate variables */
@@ -144,6 +154,9 @@ int main(int argc, char **argv)
       //ASSUMING THE ABOVE WORKS, message is arbitrary, replace later!
       data_length = new_message.count;  //Receive length of data
 
+      // check if new message
+
+      
       if(data_length == 0){       //If EoT trans. detected, close file and terminate.
          fclose(writeFile);
          break;
@@ -151,7 +164,14 @@ int main(int argc, char **argv)
 
       //If loss is detected, drop the packet.
       if(SimulateLoss() == 0){
+         printf("Packed %d lost.\n", sequence_number);
          continue;
+      }
+
+      if(new_message.sequence_number == sequence_number)
+      {
+         // new message
+         printf("Packet %d")
       }
 
       //Swap sequence number
