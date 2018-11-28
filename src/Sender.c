@@ -9,12 +9,14 @@
 #include <sys/socket.h> /* for socket, sendto, and recvfrom */
 #include <netinet/in.h> /* for sockaddr_in */
 #include <unistd.h>     /* for close */
+#include <math.h>       /* for pow */
 
 #define STRING_SIZE 1024
 
 // Used to easily toggle more verbose debugging if desired
 #define DEBUG
 
+#undef DEBUG
 /*
 Overal TODOs for Sender:
 
@@ -40,7 +42,7 @@ Count of how many times timeout expired
 
 
 // Globals
-int timeout; // 10^timeout microseconds
+int timeout_input; // 10^timeout microseconds
 
 
 struct message
@@ -95,10 +97,10 @@ int main(int argc, char *argv[])
       return 1;
    }
 
-   timeout = atof(argv[1]);
+   timeout_input = atof(argv[1]);
    
    #ifdef DEBUG
-   printf("Timeout Set To: %d\n", timeout);
+   printf("Timeout Set To: %d\n", timeout_input);
    #endif
 
 
@@ -171,9 +173,22 @@ int main(int argc, char *argv[])
    server_addr.sin_port = htons(server_port);
 
    // Timeout configuration
+
+
+   //10^timout_input microseconds
+
+   long microseconds_timeout = pow(10,timeout_input);
+
+   long seconds_component = microseconds_timeout / ((long)pow(10, 6));
+   long microseconds_component = microseconds_timeout % ((long)pow(10, 6)); 
+
+   #ifdef DEBUG
+   printf("Seconds and microseconds part of timeout: %ld, %ld\n", seconds_component, microseconds_component);
+   #endif
+
    struct timeval timeout;
-   timeout.tv_sec = 1;
-   timeout.tv_usec = 0;
+   timeout.tv_sec = seconds_component;
+   timeout.tv_usec = microseconds_component;
    setsockopt(sock_client, SOL_SOCKET, SO_RCVTIMEO, 
                (const void *) &timeout, sizeof(timeout));
 
@@ -307,7 +322,7 @@ int main(int argc, char *argv[])
    }
    fclose(readFile); //Close file
 
-   printf("End of Transmission Packet TODO explain transmissed\n");
+   
 
    struct message last_message;
    last_message.count = 0;
@@ -317,14 +332,16 @@ int main(int argc, char *argv[])
                         (struct sockaddr *)&server_addr, sizeof(server_addr));
    /* close the socket */
 
+   printf("End of Transmission Packet with sequence number %d transmitted with %d data bytes.\n", last_message.sequence_number, last_message.count);
+
    close(sock_client);
 
-   printf("\n\n***** FINAL STATISTICS *****\n");
-   printf("Number of data packets transmitted:              %d\n", data_packets_trans);
-   printf("Total number of data bytes transmitted:          %d\n", data_bytes_trans);
-   printf("Total number of retransmissions:                 %d\n", total_retransmissions);
-   printf("Total number of data packets transmitted:        %d\n", total_data_packets_trans);
-   printf("Number of ACKs recieved:                         %d\n", total_acks_recieved);
-   printf("Count of how many times timeout expired:         %d\n", num_timeouts);
-
+   printf("\n\n***************************** FINAL STATISTICS ***************************************\n");
+   printf("Number of data packets transmitted (inital transmission only):              %d\n", data_packets_trans);
+   printf("Total number of data bytes transmitted:                                     %d\n", data_bytes_trans);
+   printf("Total number of retransmissions:                                            %d\n", total_retransmissions);
+   printf("Total number of data packets transmitted (initial and retrans):             %d\n", total_data_packets_trans);
+   printf("Number of ACKs recieved:                                                    %d\n", total_acks_recieved);
+   printf("Count of how many times timeout expired:                                    %d\n", num_timeouts);
+   printf("******************************************************************************************");
 }

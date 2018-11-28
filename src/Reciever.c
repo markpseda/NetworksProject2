@@ -11,7 +11,7 @@
 #include <unistd.h>     /* for close */
 #include <time.h>       /* for random num */
 
-#define STRING_SIZE 1024
+#define STRING_SIZE 80
 
 // Used to easily toggle more verbose debugging if desired
 #define DEBUG
@@ -22,7 +22,7 @@
    incoming messages from clients. You should change this to a different
    number to prevent conflicts with others in the class. */
 
-#define SERV_UDP_PORT 65100
+#define SERV_UDP_PORT 63232
 
 /*
 Overal TODOs for Reciever:
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
 
       //If loss is detected, drop the packet, no ack sent back
       if(SimulateLoss() == 0){
-         printf("Packed %d lost.\n", new_message.sequence_number);
+         printf("Packet %d lost.\n", new_message.sequence_number);
          data_packets_recieved_but_dropped_loss +=1;
          continue;
       }
@@ -213,7 +213,6 @@ int main(int argc, char **argv)
          duplicat_packets_recieved_without_loss += 1;
 
          // we are done in this case, no need to copy the data since it is a duplicate
-         //continue;
       }
 
       
@@ -244,7 +243,6 @@ int main(int argc, char **argv)
          // simulate ack loss
          printf("ACK %d lost.\n", ACK_val);
          acks_generated_but_dropped += 1;
-
       }
       else
       {
@@ -260,7 +258,7 @@ int main(int argc, char **argv)
    // all done, time to tidy up
    fclose(writeFile);
 
-   printf("\n\n***** FINAL STATISTICS *****\n");
+   printf("\n\n***************************** FINAL STATISTICS ***************************************\n");
    printf("Number of data packets received successfully:                         %d\n", data_packets_recieved_succesfully);
    printf("Total number of data bytes received which are delivered to user:      %d\n", data_bytes_delivered);
    printf("Total number of duplicate data packets received (without loss) :      %d\n", duplicat_packets_recieved_without_loss);
@@ -269,7 +267,7 @@ int main(int argc, char **argv)
    printf("Number of ACKs transmitted without loss:                              %d\n", acks_trans_without_loss);
    printf("Number of ACKs generated but dropped due to loss:                     %d\n", acks_generated_but_dropped);
    printf("Total number of ACKs generated (with and without loss):               %d\n", toal_acks_generated_w_w_loss);
-
+   printf("******************************************************************************************");
 
 }
 
