@@ -343,5 +343,5 @@ int main(int argc, char *argv[])
    printf("Total number of data packets transmitted (initial and retrans):             %d\n", total_data_packets_trans);
    printf("Number of ACKs recieved:                                                    %d\n", total_acks_recieved);
    printf("Count of how many times timeout expired:                                    %d\n", num_timeouts);
-   printf("******************************************************************************************");
+   printf("******************************************************************************************\n");
 }

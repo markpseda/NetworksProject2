@@ -267,7 +267,7 @@ int main(int argc, char **argv)
    printf("Number of ACKs transmitted without loss:                              %d\n", acks_trans_without_loss);
    printf("Number of ACKs generated but dropped due to loss:                     %d\n", acks_generated_but_dropped);
    printf("Total number of ACKs generated (with and without loss):               %d\n", toal_acks_generated_w_w_loss);
-   printf("******************************************************************************************");
+   printf("******************************************************************************************\n");
 
 }
 
