@@ -1,0 +1,313 @@
+Script started on Wed 28 Nov 2018 09:10:33 PM EST
+mseda@cisc450:~/NetworksProject2/src$ la [K[Ks -a[Kl
+total 20
+-rw-rw-r-- 1 mseda mseda  3435 Nov 28 21:05 input.txt
+-rw-rw-r-- 1 mseda mseda   180 Nov 28 18:00 Makefile
+-rw-rw-r-- 1 mseda mseda     0 Nov 28 21:05 output.txt
+-rw-rw-r-- 1 mseda mseda  9394 Nov 28 20:58 Reciever.c
+-rw-rw-r-- 1 mseda mseda     0 Nov 28 21:10 RecieverLog.log
+-rw-rw-r-- 1 mseda mseda 10637 Nov 28 20:58 Sender.c
+-rw-rw-r-- 1 mseda mseda     0 Nov 28 21:10 SenderLog.log
+mseda@cisc450:~/NetworksProject2/src$ make
+/usr/bin/gcc Sender.c -o Sender.o -lm
+/usr/bin/gcc Reciever.c -o Reciever.o -lm
+mseda@cisc450:~/NetworksProject2/src$ m[Kcat input.txtg[K[K[K[K[K[K[K[K[K[Kinpt[Kut.txt 
+\begin{center}
+{\bf PROGRAMMING PROJECT 2\\ }
+\end{center}
+
+%\vspace{0.3in}
+\noindent
+
+In this project, you will implement the Stop-and-Wait protocol to 
+transmit data from a Sender to a Receiver
+in the presence of errors and packet loss. The protocol will be 
+unidirectional in which data is sent in one
+direction only with acknowledgments being sent in the reverse direction. 
+Only positive ACKs are used. The
+transmission of packets and ACKs will be done over UDP 
+(that represents an unreliable network layer
+channel) using fixed UDP ports.
+
+
+To implement this protocol, you will write two separate
+programs called {\em Sender} and {\em Receiver} which
+represent the actions to be executed by the sending node and
+the receiving node respectively. Both the Sender and the
+Receiver must run on the host {\em cis450.cis.udel.edu},
+as you will have to come in to my office
+to give me a demo of your programs. For convenience, 
+both the hostname and the server port number may
+be hardcoded into both the Sender and Receiver, 
+but this should be done in such a way that they should be
+easy to change.
+
+\begin{verbatim}
+    --------------------------------------------------------
+    |                   Count (2 bytes)                    |
+    --------------------------------------------------------
+    |           Packet Sequence Number (2 bytes)           |
+    --------------------------------------------------------
+    |                 Data (0 - 80 bytes)                  |
+    --------------------------------------------------------
+\end{verbatim}
+
+The second field of the header is called the
+packet sequence number. Each
+packet transmitted by the Sender is assigned
+a sequence number that alternates between 0 and 1,
+in accordance with the Stop-and-Wait protocol.
+
+
+Output of your program
+
+At specific places in both your Sender and Receiver programs, you must print 
+out specific messages.
+The symbol “n” below refers to the sequence number of the transmitted or receiv
+0 or 1), and the symbol “c” below refers to the count (number of data bytes) in
+ the transmitted or
+received packet.
+The messages to be printed by the Sender are:
+When a new data packet numbered n is sent by the Sender:
+Packet n transmitted with c data bytes
+When a data packet numbered n is retransmitted by the Sender:
+Packet n retransmitted with c data bytes
+When a timeout expires:
+Timeout expired for packet numbered n
+When an ACK is received with number n:
+ACK n received
+When the “End of Transmission” packet is sent:
+End of Transmission Packet with sequence number n transmitted with c data bytes
+
+\begin{center}
+{\bf Testing}
+\end{center}
+
+The files {\em test1.txt} and {\em test2.txt} in the directory
+{\em /usa/sethi/networks/proj2} on {\em cis450.cis.udel.edu}
+are sample input files that may
+be used by you to test your programs.
+It is strongly suggested that you first use {\em test1.txt} for
+all your testing, and only if you have thoroughly debugged your
+programs, then proceed with using {\em test2.txt} for further testing.
+
+It is also suggested that you test your programs in phases using
+the following configuration parameter values:
+
+\begin{itemize}
+\item Packet and ACK loss rates 0, Timeout value $n$  = 5.
+\item Packet loss rate 0.2, ACK loss rate 0, Timeout value
+$n$ = 5.
+\item Packet loss rate 0, ACK loss rate 0.2, Timeout value
+$n$ = 5.
+\item Packet and ACK loss rates 0, Timeout value $n$ = 3.
+\end{itemize}
+
+mseda@cisc450:~/NetworksProject2/src$ ./Sender.o 5[K[K[K[K[K[K[K[K[K[K[K[Kcat output.txt 
+mseda@cisc450:~/NetworksProject2/src$ cat output.txt [1Pin[C[C[C[C[C[C[C[Cmake[Kcat input.txt [1@out[C[C[C[C[C[C[C[C[K./O[KSender.o 0 0[K[K[K5
+Enter hostname of server: localhost
+Enter port number for server: 63232
+Packet 0 transmitted with 15 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 31 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 13 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 16 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 10 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 1 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 67 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 42 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 65 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 44 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 74 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 33 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 56 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 45 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 32 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 1 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 56 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 54 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 61 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 57 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 57 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 41 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 54 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 49 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 49 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 58 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 16 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 17 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 61 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 61 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 61 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 61 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 61 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 61 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 61 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 15 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 45 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 29 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 45 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 51 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 47 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 1 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 23 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 1 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 78 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 23 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 79 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 5 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 79 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 5 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 20 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 17 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 46 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 57 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 39 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 62 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 41 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 24 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 38 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 39 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 15 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 51 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 79 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 1 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 15 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 14 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 13 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 63 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 61 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 32 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 38 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 64 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 64 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 71 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 65 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 46 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 1 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 16 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 59 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 59 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 9 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 59 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 9 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 58 data bytes
+ACK 1 recieved
+Packet 0 transmitted with 14 data bytes
+ACK 0 recieved
+Packet 1 transmitted with 1 data bytes
+ACK 1 recieved
+End of Transmission Packet with sequence number 0 transmitted with 0 data bytes.
+
+
+***************************** FINAL STATISTICS *****************************************
+Number of data packets transmitted (inital transmission only):              94
+Total number of data bytes transmitted:                                     3435
+Total number of retransmissions:                                            0
+Total number of data packets transmitted (initial and retrans):             94
+Number of ACKs recieved:                                                    94
+Count of how many times timeout expired:                                    0
+******************************************************************************************
+mseda@cisc450:~/NetworksProject2/src$ diff input.txt output.txt 
+mseda@cisc450:~/NetworksProject2/src$ exit
+exit
+
+Script done on Wed 28 Nov 2018 09:16:19 PM EST
