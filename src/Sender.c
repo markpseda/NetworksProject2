@@ -49,13 +49,14 @@ int main(int argc, char *argv[])
    int bytes_sent, bytes_recd;         /* number of bytes sent or received */
    FILE *readFile;                      /* The input file to be read and transmitted*/ 
 
+   //Various fields used for end statistics
    int data_packets_trans = 0;
    int data_bytes_trans = 0;
    int total_retransmissions = 0;
    int total_data_packets_trans = 0;
    int total_acks_recieved = 0;
    int num_timeouts = 0;
-
+   //Representative sequence number
    short sequence_num = 0;
 
    /* assign command line arguments to appropriate variables */
@@ -71,6 +72,7 @@ int main(int argc, char *argv[])
       return 1;
    }
 
+   //Timeout input from command line used to set timeout
    timeout_input = atof(argv[1]);
    
    #ifdef DEBUG
@@ -87,24 +89,10 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
-   /* Note: there is no need to initialize local client address information
-            unless you want to specify a specific local port.
-            The local address initialization and binding is done automatically
-            when the sendto function is called later, if the socket has not
-            already been bound. 
-            The code below illustrates how to initialize and bind to a
-            specific local port, if that is desired. */
-
    /* initialize client address information */
 
    client_port = 0; /* This allows choice of any available local port */
 
-   /* Uncomment the lines below if you want to specify a particular 
-             local port: */
-   /*
-   printf("Enter port number for client: ");
-   scanf("%hu", &client_port);
-   */
 
    /* clear client address structure and initialize with client address */
    memset(&client_addr, 0, sizeof(client_addr));
@@ -152,7 +140,7 @@ int main(int argc, char *argv[])
    //10^timout_input microseconds
 
    long microseconds_timeout = pow(10,timeout_input);
-
+   //Compute timeout components
    long seconds_component = microseconds_timeout / ((long)pow(10, 6));
    long microseconds_component = microseconds_timeout % ((long)pow(10, 6)); 
 

@@ -34,12 +34,6 @@ double ack_loss_rate;
 int SimulateLoss();
 int SimulateACKLoss();
 
-struct message{
-   int count;
-   int sequence_number;
-   char data[80];
-};
-
 int main(int argc, char **argv)
 {
 
@@ -87,8 +81,8 @@ int main(int argc, char **argv)
       return 1;
    }
 
-   packet_loss_rate = atof(argv[1]);
-   ack_loss_rate = atof(argv[2]);
+   packet_loss_rate = atof(argv[1]);   //Command line argument for input of packet loss rate
+   ack_loss_rate = atof(argv[2]);      //Command line argument for input of ack loss rate
 
    #ifdef DEBUG
    printf("Packet Loss Rate Set To: %f\n", packet_loss_rate);
@@ -135,7 +129,7 @@ int main(int argc, char **argv)
 
    for (;;)
    {  
-      int b_is_new_packet = 0;
+      int b_is_new_packet = 0;     //Flag for detecting duplicates
 
       // allocate max needed size (just in case)
       char recieved_packet[84];
@@ -151,18 +145,20 @@ int main(int argc, char **argv)
       
       recieved_packet[83] = '\0';
 
-
-      memcpy(&raw_data_length, recieved_packet, sizeof(raw_data_length));
-
+      //copy data length from data packet
+      memcpy(&raw_data_length, recieved_packet, sizeof(raw_data_length));   
+      
+      //convert from network byte order to host byte order (data length)
       data_length = ntohs(raw_data_length);
 
       char data[data_length];
-      
+      //copy sequence number from data packet
       memcpy(&raw_sequence_number, recieved_packet + 2, sizeof(raw_sequence_number));
 
 
       uint16_t sequence_number = ntohs(raw_sequence_number);
 
+      //copy data from data packet
       memcpy(data, recieved_packet + 4, data_length);
 
       
@@ -188,6 +184,7 @@ int main(int argc, char **argv)
          continue;
       }
 
+      //detecting mismatched sequence numbers (duplicates)
       if(sequence_number == next_sequence_number)
       {
          b_is_new_packet = 1;
@@ -266,7 +263,7 @@ int main(int argc, char **argv)
 
    }
 
-   // all done, time to tidy up
+   //close output file
    fclose(writeFile);
 
    printf("\n\n***************************** FINAL STATISTICS *****************************************\n");
@@ -282,6 +279,11 @@ int main(int argc, char **argv)
 
 }
 
+/*
+SimulateLoss function, simulates the potential error or loss of data packet coming to receiver.
+Parameters: none
+returns: 1 or 0 (int)
+*/
 int SimulateLoss(){
    float randomNum = ((float)rand())/RAND_MAX;
    if(randomNum < packet_loss_rate){
@@ -290,6 +292,11 @@ int SimulateLoss(){
    return 1;
 }
 
+/*
+SimulateLoss function, simulates the potential error or loss of ACK response leaving the receiver.
+Parameters: none
+returns: 1 or 0 (int)
+*/
 int SimulateACKLoss(){
    float randomNum = ((float)rand())/RAND_MAX;
    if(randomNum < ack_loss_rate){
