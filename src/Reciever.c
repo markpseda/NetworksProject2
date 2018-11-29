@@ -156,33 +156,24 @@ int main(int argc, char **argv)
       bytes_recd = recvfrom(sock_server, recieved_packet, 84, 0,
                             (struct sockaddr *)&client_addr, &client_addr_len);
       
-      
-      printf("bytes recieved: %d\n", bytes_recd);
+
       short raw_data_length;
       short raw_sequence_number;
 
       
       recieved_packet[83] = '\0';
-      printf("Recieved packet: %s\n", recieved_packet);
 
 
       memcpy(&raw_data_length, recieved_packet, sizeof(raw_data_length));
 
-
-      printf("Raw data length: %d\n", raw_data_length);
-      
       data_length = ntohs(raw_data_length);
-
-      printf("Data length: %d\n", data_length);
 
       char data[data_length];
       
       memcpy(&raw_sequence_number, recieved_packet + 2, sizeof(raw_sequence_number));
 
 
-      printf("Raw sequence number: %d\n", raw_sequence_number);
       uint16_t sequence_number = ntohs(raw_sequence_number);
-      printf("Sequence Number: %d\n", sequence_number);
 
       memcpy(data, recieved_packet + 4, data_length);
 

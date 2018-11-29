@@ -11,31 +11,12 @@
 #include <unistd.h>     /* for close */
 #include <math.h>       /* for pow */
 
-#define STRING_SIZE 1024
+#define STRING_SIZE 80
 
 // Used to easily toggle more verbose debugging if desired
 #define DEBUG
 
 #undef DEBUG
-/*
-Overal TODOs for Sender:
-
-[ ] Read command line arguments and load them into globals
-
-[ ] Implement stop and wait sender side
-
-[ ] Implement reading from input.txt file
-
-Statistics:
-
-Number of data packets transmitted (initial transmission only) 
-Total number of data bytes transmitted (this should be the sum of the count fields of all transmitted packets when transmitted for the first time only) 
-Total number of retransmissions 
-Total number of data packets transmitted (initial transmissions plus retransmissions) 
-Number of ACKs received 
-Count of how many times timeout expired
-
-*/
 
 
 // Method Stubs to be implemented
@@ -211,8 +192,6 @@ int main(int argc, char *argv[])
 	   char info[data_len];
 	   memcpy(info, sentence, data_len);
 
-	   
-
 
       int first_transmission = 1;
       
@@ -227,68 +206,9 @@ int main(int argc, char *argv[])
 
       uint16_t data_len_to_send = htons(data_len);
       uint16_t sequence_num_to_send = htons(sequence_num);
-
-      printf("data_len_to_send: %d\n", data_len_to_send);
-
-      short newthing = ntohs(data_len_to_send);
-
-      printf("Back again: %d\n", newthing);
-
-
-
       memcpy(packet, &data_len_to_send, 2);
       memcpy(packet + 2, &sequence_num_to_send, 2);
       memcpy(packet + 4, info, data_len);
-
-      /*
-      short raw_data_length;
-      memcpy(&raw_data_length, packet, sizeof(raw_data_length));
-
-      short raw_seq;
-      memcpy(&raw_seq, packet + 2, sizeof(raw_data_length));
-
-
-      int data_length = ntohs(raw_data_length);
-      int seq = ntohs(raw_seq);
-
-      char newDAta[84];
-      memcpy(newDAta, packet + 4, data_length);
-      newDAta[83] = '\0';
-
-      printf("data length: %d\n", data_length);
-      printf("sequnce: %d\n", seq);
-
-      printf("LKDjfkldjfl: %s\n", newDAta);
-      */
-
-
-
-
-
-
-
-
-      /*
-      struct message new_message;
-      new_message.count = data_len;
-		new_message.sequence_number = sequence_num;
-
-      
-
-      memcpy(new_message.data, info, data_len);
-
-      #ifdef DEBUG
-      printf("*** MESSAGE DETAILS ***");
-      printf("New message data_len: %d\n", data_len);
-      printf("New message sequence number: %d\n", sequence_num);
-      //message[data_len] = '\0';
-      //printf("Message data: %s\n", message);
-      printf("***********************\n");
-      #endif
-
-      msg_len = sizeof(new_message);
-      */
-
 
       // send NEW message
 
@@ -332,9 +252,6 @@ int main(int argc, char *argv[])
 
          uint16_t ACK_number_recieved_converted = ntohs(ACK_number_recieved);
          
-         //TESTING ONLY
-         //bytes_recd = 2;
-         //ACK_number_recieved = sequence_num;
 
          if (bytes_recd <=0)
          {
