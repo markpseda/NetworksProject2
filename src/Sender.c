@@ -45,14 +45,6 @@ Count of how many times timeout expired
 int timeout_input; // 10^timeout microseconds
 
 
-struct message
-{
-	int count; // number of characters in data, no null character
-	int sequence_number;		 // self explainatory
-	char data[80];	 // the data itself
-};
-
-
 int main(int argc, char *argv[])
 {
 
@@ -82,7 +74,7 @@ int main(int argc, char *argv[])
    int total_acks_recieved = 0;
    int num_timeouts = 0;
 
-   int sequence_num = 0;
+   short sequence_num = 0;
 
    /* assign command line arguments to appropriate variables */
 
@@ -215,9 +207,10 @@ int main(int argc, char *argv[])
       printf("SENTENCE: %s\n", sentence);
       #endif
       
-      int data_len = strlen(sentence);
+      short data_len = strlen(sentence);
 	   char info[data_len];
 	   memcpy(info, sentence, data_len);
+
 	   
 
 
@@ -225,6 +218,57 @@ int main(int argc, char *argv[])
       
 
       // make_pkt
+      int packet_to_send_size = 4 + data_len; 
+      #ifdef DEBUG
+      printf("Packet to send size: %d\n", packet_to_send_size);
+      #endif
+
+      char packet[packet_to_send_size];
+
+      uint16_t data_len_to_send = htons(data_len);
+      uint16_t sequence_num_to_send = htons(sequence_num);
+
+      printf("data_len_to_send: %d\n", data_len_to_send);
+
+      short newthing = ntohs(data_len_to_send);
+
+      printf("Back again: %d\n", newthing);
+
+
+
+      memcpy(packet, &data_len_to_send, 2);
+      memcpy(packet + 2, &sequence_num_to_send, 2);
+      memcpy(packet + 4, info, data_len);
+
+      /*
+      short raw_data_length;
+      memcpy(&raw_data_length, packet, sizeof(raw_data_length));
+
+      short raw_seq;
+      memcpy(&raw_seq, packet + 2, sizeof(raw_data_length));
+
+
+      int data_length = ntohs(raw_data_length);
+      int seq = ntohs(raw_seq);
+
+      char newDAta[84];
+      memcpy(newDAta, packet + 4, data_length);
+      newDAta[83] = '\0';
+
+      printf("data length: %d\n", data_length);
+      printf("sequnce: %d\n", seq);
+
+      printf("LKDjfkldjfl: %s\n", newDAta);
+      */
+
+
+
+
+
+
+
+
+      /*
       struct message new_message;
       new_message.count = data_len;
 		new_message.sequence_number = sequence_num;
@@ -243,6 +287,7 @@ int main(int argc, char *argv[])
       #endif
 
       msg_len = sizeof(new_message);
+      */
 
 
       // send NEW message
@@ -250,22 +295,22 @@ int main(int argc, char *argv[])
       // keep looping until message is sent succesfully
       while(1) 
       {
-         bytes_sent = sendto(sock_client, &new_message, msg_len, 0,
+         bytes_sent = sendto(sock_client, packet, packet_to_send_size, 0,
                         (struct sockaddr *)&server_addr, sizeof(server_addr));
          // Increment number of transmissions and bytes sent
 
          
          if(first_transmission)
          {
-            printf("Packet %d transmitted with %d data bytes\n",sequence_num, msg_len);
+            printf("Packet %d transmitted with %d data bytes\n",sequence_num, data_len);
             data_packets_trans += 1;
-            data_bytes_trans += new_message.count;
+            data_bytes_trans += data_len;
 
             total_data_packets_trans += 1;
          }
          else
          {
-            printf("Packet %d retransmitted with %d data bytes\n",sequence_num, msg_len);
+            printf("Packet %d retransmitted with %d data bytes\n",sequence_num, data_len);
 
             total_data_packets_trans += 1;
 
@@ -278,12 +323,14 @@ int main(int argc, char *argv[])
          /********** WAIT FOR ACK *****************/
 
          // Buffer for recieving the ack
-         int ACK_number_recieved;
+         short ACK_number_recieved;
          int response_len = sizeof(ACK_number_recieved);
 
          
          bytes_recd = recvfrom(sock_client, &ACK_number_recieved, response_len, 0,
                            (struct sockaddr *)0, (int *)0);
+
+         uint16_t ACK_number_recieved_converted = ntohs(ACK_number_recieved);
          
          //TESTING ONLY
          //bytes_recd = 2;
@@ -300,9 +347,9 @@ int main(int argc, char *argv[])
          else
          {
             total_acks_recieved += 1;
-            printf("ACK %d recieved\n", ACK_number_recieved);
+            printf("ACK %d recieved\n", ACK_number_recieved_converted);
             // is ACK what was expected?
-            if(ACK_number_recieved == sequence_num)
+            if(ACK_number_recieved_converted == sequence_num)
             {
                // success! change sequence number
                if(sequence_num == 0)
@@ -322,21 +369,30 @@ int main(int argc, char *argv[])
    }
    fclose(readFile); //Close file
 
-   
+    
 
-   struct message last_message;
-   last_message.count = 0;
-   last_message.sequence_number = 0;
+   /************** SEND FINAL PACKET **********************/
 
-   sendto(sock_client, &last_message, sizeof(last_message), 0,
+   short size_of_zero = 0;
+   int packet_to_send_size = sizeof(sequence_num) + sizeof(size_of_zero);
+
+   uint16_t sequence_num_to_send = htons(sequence_num);
+   uint16_t data_len_to_send = htons(size_of_zero);
+
+   char last_packet[packet_to_send_size];
+
+   memcpy(last_packet, &data_len_to_send, sizeof(size_of_zero));
+   memcpy(last_packet + 2, &sequence_num_to_send, sizeof(sequence_num));
+
+   sendto(sock_client, last_packet, packet_to_send_size, 0,
                         (struct sockaddr *)&server_addr, sizeof(server_addr));
    /* close the socket */
 
-   printf("End of Transmission Packet with sequence number %d transmitted with %d data bytes.\n", last_message.sequence_number, last_message.count);
+   printf("End of Transmission Packet with sequence number %d transmitted with %d data bytes.\n", sequence_num, size_of_zero);
 
    close(sock_client);
 
-   printf("\n\n***************************** FINAL STATISTICS ***************************************\n");
+   printf("\n\n***************************** FINAL STATISTICS *****************************************\n");
    printf("Number of data packets transmitted (inital transmission only):              %d\n", data_packets_trans);
    printf("Total number of data bytes transmitted:                                     %d\n", data_bytes_trans);
    printf("Total number of retransmissions:                                            %d\n", total_retransmissions);

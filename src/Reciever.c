@@ -71,7 +71,7 @@ int main(int argc, char **argv)
    int bytes_sent, bytes_recd;         /* number of bytes sent or received */
    unsigned int i;                     /* temporary loop variable */
    int next_sequence_number = 0;            /* sequence number */
-   int data_length;                    /* length of data lines */
+   short data_length;                    /* length of data lines */
    FILE *writeFile;                   /* file data will be written to */
 
 
@@ -149,16 +149,48 @@ int main(int argc, char **argv)
    {  
       int b_is_new_packet = 0;
 
-      struct message new_message;
+      // allocate max needed size (just in case)
+      char recieved_packet[84];
 
-      bytes_recd = recvfrom(sock_server, &new_message, sizeof(new_message), 0,
+      // max size of 84: 4 bytes of header, 80 bytes of data
+      bytes_recd = recvfrom(sock_server, recieved_packet, 84, 0,
                             (struct sockaddr *)&client_addr, &client_addr_len);
       
       
-      data_length = new_message.count;  //Receive length of data
+      printf("bytes recieved: %d\n", bytes_recd);
+      short raw_data_length;
+      short raw_sequence_number;
+
+      
+      recieved_packet[83] = '\0';
+      printf("Recieved packet: %s\n", recieved_packet);
+
+
+      memcpy(&raw_data_length, recieved_packet, sizeof(raw_data_length));
+
+
+      printf("Raw data length: %d\n", raw_data_length);
+      
+      data_length = ntohs(raw_data_length);
+
+      printf("Data length: %d\n", data_length);
+
+      char data[data_length];
+      
+      memcpy(&raw_sequence_number, recieved_packet + 2, sizeof(raw_sequence_number));
+
+
+      printf("Raw sequence number: %d\n", raw_sequence_number);
+      uint16_t sequence_number = ntohs(raw_sequence_number);
+      printf("Sequence Number: %d\n", sequence_number);
+
+      memcpy(data, recieved_packet + 4, data_length);
+
+      
+
       
       if(data_length == 0){       //If EoT trans. detected, close file and terminate.
-         printf("End of Transmission Packet with sequence number %d recieved with %d data bytes.\n", new_message.sequence_number, new_message.count);
+         printf("End of Transmission Packet with sequence number %d recieved with %d data bytes.\n", sequence_number, data_length);
          break;
       }
       
@@ -172,12 +204,12 @@ int main(int argc, char **argv)
 
       //If loss is detected, drop the packet, no ack sent back
       if(SimulateLoss() == 0){
-         printf("Packet %d lost.\n", new_message.sequence_number);
+         printf("Packet %d lost.\n", sequence_number);
          data_packets_recieved_but_dropped_loss +=1;
          continue;
       }
 
-      if(new_message.sequence_number == next_sequence_number)
+      if(sequence_number == next_sequence_number)
       {
          b_is_new_packet = 1;
       }
@@ -191,10 +223,10 @@ int main(int argc, char **argv)
       if(b_is_new_packet)
       {
          // new message
-         printf("Packet %d recieved with %d data bytes.\n", new_message.sequence_number, new_message.count);
+         printf("Packet %d recieved with %d data bytes.\n", sequence_number, data_length);
          data_packets_recieved_succesfully += 1;
 
-         data_bytes_delivered += new_message.count;
+         data_bytes_delivered += data_length;
 
          //Swap sequence number for new message recieved succesfully
          if(next_sequence_number == 0)
@@ -209,7 +241,7 @@ int main(int argc, char **argv)
       else
       {
          // duplicate message
-         printf("Duplicate packet %d recieved with %d data bytes.\n", new_message.sequence_number, new_message.count);
+         printf("Duplicate packet %d recieved with %d data bytes.\n", sequence_number, data_length);
          duplicat_packets_recieved_without_loss += 1;
 
          // we are done in this case, no need to copy the data since it is a duplicate
@@ -223,7 +255,7 @@ int main(int argc, char **argv)
       /********************* WRITE TO FILE *****************************/
       if(b_is_new_packet)
       {
-         memcpy(sentence, new_message.data, data_length);      //Receive actual text line
+         memcpy(sentence, data, data_length);      //Receive actual text line
          sentence[data_length] = '\0';     //Add null terminator
          #ifdef DEBUG
          printf("String to add to file: %s\n", sentence);
@@ -234,8 +266,8 @@ int main(int argc, char **argv)
 
 
       /************** SEND ACK ************************/
-      short int ACK_val = new_message.sequence_number; // duplicate or new this is true
-      short int ACK = htonl(ACK_val);
+      short ACK_val = sequence_number; // duplicate or new this is true
+      short ACK = htons(ACK_val);
 
       toal_acks_generated_w_w_loss += 1;
       if(SimulateACKLoss() == 0)
@@ -246,7 +278,7 @@ int main(int argc, char **argv)
       }
       else
       {
-         bytes_sent = sendto(sock_server, &ACK_val, 2, 0,
+         bytes_sent = sendto(sock_server, &ACK, 2, 0,
                      (struct sockaddr *)&client_addr, client_addr_len);
          printf("ACK %d transmitted.\n", ACK_val);
          acks_trans_without_loss += 1;
@@ -258,7 +290,7 @@ int main(int argc, char **argv)
    // all done, time to tidy up
    fclose(writeFile);
 
-   printf("\n\n***************************** FINAL STATISTICS ***************************************\n");
+   printf("\n\n***************************** FINAL STATISTICS *****************************************\n");
    printf("Number of data packets received successfully:                         %d\n", data_packets_recieved_succesfully);
    printf("Total number of data bytes received which are delivered to user:      %d\n", data_bytes_delivered);
    printf("Total number of duplicate data packets received (without loss) :      %d\n", duplicat_packets_recieved_without_loss);
