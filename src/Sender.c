@@ -1,6 +1,7 @@
-/* udp_client.c */
-/* Programmed by Adarsh Sethi */
-/* Sept. 13, 2018 */
+/* Sender.c */
+/* Base Programmed by Adarsh Sethi */
+/* Theodore Fessaras and Mark Seda
+/* November 28, 2018 */
 
 #include <stdio.h>      /* for standard I/O functions */
 #include <stdlib.h>     /* for exit */

@@ -1,6 +1,7 @@
-/* udp_server.c */
-/* Programmed by Adarsh Sethi */
-/* Sept. 13, 2018 */
+/* Reciever.c */
+/* Base Programmed by Adarsh Sethi */
+/* Theodore Fessaras and Mark Seda
+/* November 28, 2018 */
 
 #include <ctype.h>      /* for toupper */
 #include <stdio.h>      /* for standard I/O functions */
@@ -23,19 +24,6 @@
    number to prevent conflicts with others in the class. */
 
 #define SERV_UDP_PORT 63232
-
-/*
-Overal TODOs for Reciever:
-
-[x] Read command line arguments and load them into globals
-
-[ ] Write to output.txt file at start and close file at close of program
-
-[ ] Implement stop and wait reciever side
-
-[ ] Implement SimulateLoss
-[ ] Implement SimulateACKLoss
-*/
 
 
 // Globals
